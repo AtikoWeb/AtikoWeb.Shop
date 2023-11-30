@@ -1,0 +1,58 @@
+# Node.js
+node_modules/
+
+# Откомпилированные файлы
+build/
+dist/
+out/
+
+# Локальные файлы окружения
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Файлы логов
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Импортированные файлы
+*.pem
+*.der
+*.key
+*.crt
+*.csr
+*.cert
+*.cer
+*.pfx
+*.p12
+*.ovpn
+
+# Локальные и временные файлы
+.DS_Store
+Thumbs.db
+
+# Зависимости Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+
+# Зависимости Pnpm
+.pnpm/*
+.pnpm-debug.log
+
+# Зависимости ESLint
+.eslintcache
+
+# Зависимости Jest
+coverage/
+*.log
+
+# Зависимости Flow
+.flowconfig
+
+# Конфигурационные файлы для Visual Studio Code
+.vscode/

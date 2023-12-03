@@ -3,31 +3,32 @@ import React, { useState } from 'react';
 import { IoIosArrowBack } from 'react-icons/io';
 import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { userRegistered } from '../../redux/slices/userSlice';
+import axios from '../../axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 function SignUp() {
 	const navigate = useNavigate();
-	const dispatch = useDispatch();
 	const [name, setName] = useState('');
 	const [phone, setPhone] = useState('');
 	const [password, setPassword] = useState('');
+	const [showPassword, setShowPassword] = useState(false);
 
 	const handleNameChange = (e) => {
-		console.log('Name:', e.target.value);
 		setName(e.target.value);
 	};
 
 	const handlePhoneChange = (e) => {
-		console.log('Phone:', e.target.value);
 		setPhone(e.target.value);
 	};
 
 	const handlePasswordChange = (e) => {
-		console.log('Password:', e.target.value);
 		setPassword(e.target.value);
+	};
+
+	const handleShowPassword = () => {
+		setShowPassword(!showPassword);
 	};
 
 	const showToast = (message) => {
@@ -42,13 +43,7 @@ function SignUp() {
 
 	const register = async () => {
 		try {
-			const response = await axios.post(
-				'http://localhost:5555/api/user/signup',
-				newUser
-			);
-			const userId = response.data.userId;
-			dispatch(userRegistered(userId));
-			localStorage.setItem('userId', userId);
+			await axios.post('/user/signup', newUser);
 		} catch (error) {
 			// Обработка ошибок регистрации, если необходимо
 		}
@@ -80,12 +75,13 @@ function SignUp() {
 		}
 
 		register();
+		navigate('/verify', { state: { phone, email } });
 	};
 
 	return (
 		<div className='bg-white mx-auto mt-5 rounded-2xl lg:h-screen h-full w-full'>
 			<Button
-				onPress={() => navigate(-1)}
+				onPress={() => navigate('/')}
 				size='sm'
 				className='normal-case absolute top-3 lg:top-10 -ml-2 bg-transparent flex justify-start'
 			>
@@ -111,7 +107,7 @@ function SignUp() {
 				<Input
 					isRequired
 					fullWidth
-					type='phone'
+					type='number'
 					value={phone}
 					onChange={handlePhoneChange}
 					label='Телефон'
@@ -123,13 +119,26 @@ function SignUp() {
 				<Input
 					fullWidth
 					isRequired
-					type='text'
+					type={showPassword ? 'text' : 'password'}
 					value={password}
 					onChange={handlePasswordChange}
 					label='Пароль'
 					defaultValue=''
 					size='lg'
 					className='mb-5'
+					endContent={
+						<Button
+							onClick={handleShowPassword}
+							size='sm'
+							className='absolute right-3 top-4'
+						>
+							{showPassword ? (
+								<FaEyeSlash className='text-xl' />
+							) : (
+								<FaEye className='text-xl' />
+							)}
+						</Button>
+					}
 				/>
 
 				<Button

@@ -9,6 +9,7 @@ import {
 	Link,
 	Button,
 	NavbarMenuToggle,
+	Avatar,
 } from '@nextui-org/react';
 
 import { SiCashapp } from 'react-icons/si';
@@ -62,11 +63,6 @@ export default function Header() {
 			icon: <MdContactPhone style={{ fontSize: 28 }} />,
 			link: '/contacts',
 		},
-		{
-			name: 'Скидки',
-			icon: <FaPercent />,
-			link: '/sales',
-		},
 	];
 
 	return (
@@ -106,16 +102,26 @@ export default function Header() {
 			<NavbarContent justify='end'>
 				<NavbarItem className='hidden lg:flex'></NavbarItem>
 				<NavbarItem>
-					<Button
-						onPress={onPressButton}
-						size='sm'
-						href='#'
-						color='primary'
-						variant={isAuth ? 'bordered' : 'solid'}
-						className='font-bold'
-					>
-						{isAuth ? 'Мой профиль' : 'Войти'}
-					</Button>
+					{isAuth ? (
+						<Avatar
+							isBordered
+							color='primary'
+							src='/avatar.png'
+							className='cursor-pointer'
+							onClick={() => navigate('/profile')}
+						/>
+					) : (
+						<Button
+							onPress={onPressButton}
+							size='sm'
+							href='#'
+							color='primary'
+							variant={'solid'}
+							className='font-bold'
+						>
+							Войти
+						</Button>
+					)}
 				</NavbarItem>
 			</NavbarContent>
 

@@ -13,8 +13,10 @@ function ProductCard({
 }) {
 	const API_URL_IMAGES = process.env.REACT_APP_API_IMAGE_URL;
 	// фильтруем список изображений по артикулу продукта
-	const imageList = images.filter((image) => image.name.includes(art));
-	const image = imageList.length > 0 ? imageList[0].name : '';
+	const imageList = Array.isArray(images)
+		? images.filter((image2) => image2.name.includes(art))
+		: [];
+	const image = imageList.length > 0 ? imageList[0].name : 'default_image.jpg';
 
 	return (
 		<Card
@@ -29,6 +31,10 @@ function ProductCard({
 					radius='lg'
 					loading='lazy'
 					width='100%'
+					onError={(e) => {
+						console.error('Error loading image:', e);
+						e.target.src = '/not_img.jpg';
+					}}
 					isLoading={isLoading}
 					disableSkeleton={false}
 					className='w-full object-cover h-44'

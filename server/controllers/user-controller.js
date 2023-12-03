@@ -1,8 +1,21 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
+import nodemailer from 'nodemailer';
 
 const saltRounds = 10; // количество "проходов" хеширования
+
+// Настройка транспорта для nodemailer
+const transporter = nodemailer.createTransport({
+	service: 'Mail', // Можно использовать другой SMTP сервис или данные вашего почтового сервера
+	secure: true,
+	auth: {
+		user: 'bil@atikoweb.ru', // Поменяйте на вашу почту
+		pass: 'KW3NSYT4RyqtZwYsheKN', // Поменяйте на пароль от вашей почты
+	},
+	host: 'smtp.mail.ru',
+	port: '465',
+});
 
 // Генерация соли и хеширование пароля
 const generateHash = async (password) => {
@@ -26,20 +39,114 @@ const comparePassword = async (password, hashedPassword) => {
 };
 
 class UserController {
+	// Временное хранилище для кодов подтверждения
+	verificationCodes = {};
+
+	constructor() {
+		// Важно привязать методы к текущему экземпляру класса
+		this.signUp = this.signUp.bind(this);
+		this.verificationUser = this.verificationUser.bind(this);
+		// Добавьте привязку для других методов, если это необходимо
+	}
+
 	async signUp(req, res) {
-		const { name, phone, password } = req.body;
+		const { name, phone, password, email } = req.body;
 
 		try {
 			const hashPassword = await generateHash(password);
 
-			const user = { username: name, phone, password: hashPassword };
+			const user = {
+				username: name,
+				phone,
+				password: hashPassword,
+				active: false,
+			};
 
-			const newUser = await prisma.user.create({ data: user });
+			await prisma.user.create({ data: user });
 
-			res.json({ userId: newUser.id });
+			// Генерация кода подтверждения
+			const verificationCode = Math.floor(1000 + Math.random() * 9000);
+			this.verificationCodes[phone] = verificationCode;
+
+			const mailOptions = {
+				from: 'bil@atikoweb.ru',
+				to: email,
+				html: `<div
+			style="
+				display: grid;
+				place-content: center;
+				place-items: center;
+				margin: auto;
+			"
+		>
+			<div style="margin-bottom: 40px">
+				<img
+					src="https://aokia.kz/aokia_logo.png"
+					alt=""
+					style="height: 40px;"
+				/>
+			</div>
+			<div>
+				<h1 style="font-weight: bold; color: #2d2d2e; font-size: x-large">
+					Здравствуйте, ${name}!
+				</h1>
+				<h1 style="font-weight: normal; color: #2d2d2e; font-size: x-large">
+					Ваш код подтверждения :
+				</h1>
+				<div style="display: flex; justify-content: center">
+					<button
+						style="
+							padding: 20px;
+							border: none;
+							background-color: #f3f4f6;
+							border-radius: 10px;
+							color: black;
+							width: 200px;
+							font-size: 25px;
+							font-weight: bold;
+						"
+					>
+						${verificationCode}
+					</button>
+				</div>
+			</div>
+		</div>`,
+				subject: 'Код подтверждения',
+			};
+
+			// Отправка письма
+			transporter.sendMail(mailOptions, (error, info) => {
+				if (error) {
+					console.log(error);
+				} else {
+					console.log('Email sent: ' + info.response);
+				}
+			});
+
+			res.json('Ожидание верификации');
 		} catch (error) {
 			res.send('Ошибка создания');
 			console.log('Ошибка создания', error);
+		}
+	}
+
+	async verificationUser(req, res) {
+		const { phone, code } = req.body;
+
+		// Получение кода подтверждения из временного хранилища
+		const storedCode = this.verificationCodes[phone];
+
+		if (storedCode && storedCode.toString() === code) {
+			// Коды совпадают - пользователь подтвержден
+			delete this.verificationCodes[phone]; // Удаляем использованный код
+			const user = await prisma.user.update({
+				where: { phone },
+				data: { active: true },
+			});
+			res.json({ userId: user.id });
+		} else {
+			// Коды не совпадают
+			res.status(401).json('Неверный код подтверждения');
 		}
 	}
 
@@ -48,9 +155,10 @@ class UserController {
 
 		try {
 			// Проверка, существует ли пользователь
-			const user = await prisma.user.findUnique({
+			const user = await prisma.user.findFirst({
 				where: {
 					phone,
+					active: true,
 				},
 			});
 
@@ -71,29 +179,73 @@ class UserController {
 			console.log('Ошибка входа', error);
 		}
 	}
-	async getUser(req, res) {
-		const { id } = req.body;
 
+	async getUser(req, res) {
+		const { id } = req.query;
+
+		if (!id) {
+			return res
+				.status(400)
+				.json({ error: 'Неверный запрос. Отсутствует параметр id.' });
+		}
+
+		// Теперь вы уверены, что id существует и не является пустым
+		const user = await prisma.user.findUnique({
+			where: {
+				id: String(id),
+			},
+			select: {
+				username: true,
+				phone: true,
+			},
+		});
+
+		if (!user) {
+			return res.status(401).json({ error: 'Пользователь не найден' });
+		}
+
+		res.json(user);
+	}
+	catch(error) {
+		res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+		console.log('Ошибка', error);
+	}
+
+	async getUsers(req, res) {
 		try {
-			// Проверка, существует ли пользователь
-			const user = await prisma.user.findUnique({
-				where: {
-					id,
-				},
+			const users = await prisma.user.findMany({
 				select: {
+					id: true,
 					username: true,
 					phone: true,
+					active: true,
 				},
 			});
-
-			if (!user) {
-				return res.status(401).json({ error: 'Пользователь не найден' });
-			}
-
-			res.json();
+			res.json(users);
 		} catch (error) {
-			res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-			console.log('Ошибка', error);
+			console.log(error);
+			res.send('Ошибка при получении');
+		}
+	}
+
+	async deleteUsers(req, res) {
+		try {
+			await prisma.user.deleteMany();
+			res.send('Все пользователи успешно удалены!');
+		} catch (error) {
+			console.log(error);
+			res.send('Ошибка при удалении');
+		}
+	}
+
+	async deleteUser({ req, res }) {
+		try {
+			const { phone } = req.body;
+			await prisma.user.delete({ where: { phone } });
+			res.send('Пользователь успешно удален!');
+		} catch (error) {
+			console.log(error);
+			res.send('Ошибка при удалении');
 		}
 	}
 }

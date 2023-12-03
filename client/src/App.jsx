@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import Home from './screens/Home';
 import { useDispatch, useSelector } from 'react-redux';
@@ -18,9 +18,12 @@ import axios from '../axios';
 import Layout from './components/Layout';
 import SignIn from './screens/SignIn';
 import SignUp from './screens/SignUp';
+import Profile from './screens/Profile';
+import Verify from './screens/Verify';
 
 const App = () => {
 	const dispatch = useDispatch();
+	const navigate = useNavigate();
 	const location = useLocation();
 	const isVisible = useSelector((state) => state.cart.isVisible);
 	const itemCount = useSelector((state) => state.cart.count);
@@ -51,7 +54,7 @@ const App = () => {
 				console.warn(err);
 				// Установка состояния ошибки загрузки в true в случае ошибки
 				setLoading(false);
-				setLoadingError(true);
+				setLoadingError(false);
 			}
 		};
 
@@ -96,11 +99,14 @@ const App = () => {
 				<div
 					className={`hidden w-1/2 lg:block xl:w-1/5 mr-5 mt-5 rounded-2xl bg-white pt-5`}
 				>
-					<div className='font-bold text-3xl flex justify-center pb-8'>
+					<div
+						onClick={() => navigate('/')}
+						className='flex justify-center pb-8'
+					>
 						<img
 							src='/aokia_logo.png'
 							alt=''
-							className='h-10'
+							className='h-10 cursor-pointer'
 						/>
 					</div>
 					<ScrollShadow className='mx-3 h-[620px]'>
@@ -112,7 +118,7 @@ const App = () => {
 							target='_blank'
 						>
 							<span className='text-lg font-bold text-neutral-400'>
-								Powered by AtikoWeb
+								Работает на AtikoWeb
 							</span>
 						</a>
 					</div>
@@ -197,6 +203,36 @@ const App = () => {
 									transition={{ duration: 0.1, delay: 0.2 }}
 								>
 									<SignUp />
+								</motion.div>
+							}
+						/>
+						<Route
+							key={'Profile'}
+							path='/profile'
+							element={
+								<motion.div
+									key='Profile'
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={{ opacity: 0 }}
+									transition={{ duration: 0.1, delay: 0.2 }}
+								>
+									<Profile />
+								</motion.div>
+							}
+						/>
+						<Route
+							key={'Verify'}
+							path='/verify'
+							element={
+								<motion.div
+									key='Verify'
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={{ opacity: 0 }}
+									transition={{ duration: 0.1, delay: 0.2 }}
+								>
+									<Verify />
 								</motion.div>
 							}
 						/>

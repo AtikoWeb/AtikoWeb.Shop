@@ -9,7 +9,7 @@ const Layout = ({ children }) => {
 	return (
 		<div
 			className={`flex flex-col h-screen min-h-screen bg-white w-full lg:bg-gray-100 lg:overflow-y-scroll ${
-				isSettings && 'xl:w-1/1'
+				isSettings && 'xl:w-screen'
 			} xl:w-1/2`}
 		>
 			{children}

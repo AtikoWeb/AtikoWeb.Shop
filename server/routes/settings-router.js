@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 settingsRouter.post('/', async (req, res) => {
 	try {
-		const { mainColor, columnCount } = req.body;
+		const { mainColor, shopName, columnCount, isInteresting } = req.body;
 
 		await prisma.config.deleteMany();
 
@@ -14,6 +14,8 @@ settingsRouter.post('/', async (req, res) => {
 			data: {
 				main_color: mainColor,
 				column_count: columnCount,
+				isInteresting: isInteresting,
+				shop_name: shopName
 			},
 		});
 
@@ -34,5 +36,6 @@ settingsRouter.get('/', async (req, res) => {
 		res.send('Ошибка! Получение не удалось!');
 	}
 });
+
 
 export default settingsRouter;

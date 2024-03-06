@@ -23,11 +23,12 @@ class ProductController {
 						desc: product.desc,
 						opt_price: product.opt_price,
 						barcode: product.barcode,
-						art: product.vendor,
+						art: product.art,
 						active: product.active,
 						sizeId: product.sizeId,
 						sizeName: product.sizeName,
 						categoryId: product.categoryId,
+						brandId: product.brandId
 					},
 				});
 			}
@@ -36,70 +37,96 @@ class ProductController {
 		}
 	}
 
-	async getAll(req, res) {
-		let { categoryId, page, limit } = req.query;
-		const token = req.headers[process.env.HEADER_TOKEN_NAME];
-		const accessToken = process.env.ACCESS_TOKEN;
+async getAll(req, res) {
+    let { 
+        categoryId, 
+        searchQuery, 
+        sort, 
+        brandIds = [], 
+        minPrice, 
+        maxPrice, 
+        limit // Добавляем параметр limit
+    } = req.query;
 
-		if (token != accessToken) {
-			return res.send('ACCESS DENIED');
-		}
+    const token = req.headers[process.env.HEADER_TOKEN_NAME];
+    const accessToken = process.env.ACCESS_TOKEN;
 
-		page = page || 1;
-		limit = limit || 9;
-		let offset = page * limit - limit;
-		let products;
-		const count = await prisma.product.count({
-			skip: parseInt(offset),
-			take: parseInt(limit),
-			where: { categoryId, active: true },
-		});
+    if (token !== accessToken) {
+        return res.send('ACCESS DENIED');
+    }
 
-		if (!categoryId) {
-			products = await prisma.product.findMany({
-				where: { active: true },
-				select: {
-					productId: true,
-					name: true,
-					price: true,
-					opt_price: true,
-					active: true,
-					art: true,
-					category: true,
-				},
+    // Строим объект where на основе критериев фильтрации
+    const where = categoryId ? { categoryId } : {};
 
-				orderBy: {
-					productId: 'asc',
-				},
-				distinct: ['productId', 'name', 'price', 'desc'],
-				skip: parseInt(offset),
-				take: parseInt(limit),
-			});
-		}
+    if (searchQuery) {
+        where.OR = [
+            {
+                name: {
+                    contains: searchQuery,
+                    mode: 'insensitive',
+                },
+            },
+        ];
+    }
 
-		if (categoryId) {
-			products = await prisma.product.findMany({
-				where: { categoryId, active: true },
-				select: {
-					productId: true,
-					name: true,
-					price: true,
-					opt_price: true,
-					active: true,
-					art: true,
-					category: true,
-				},
-				orderBy: {
-					productId: 'asc',
-				},
-				distinct: ['productId', 'name', 'price', 'desc', 'categoryId'],
-				skip: parseInt(offset),
-				take: parseInt(limit),
-			});
-		}
+    if (brandIds.length > 0) {
+        const brandConditions = brandIds.map((brandId) => ({
+            brand: {
+                id: brandId,
+            },
+            category: {
+                id: categoryId,
+            },
+        }));
 
-		res.json({ count, products });
-	}
+        if (!where.OR) {
+            where.OR = [];
+        }
+
+        where.OR = where.OR.concat(brandConditions);
+    }
+
+    if (minPrice && maxPrice) {
+        where.price = {
+            gte: parseInt(minPrice),
+            lte: parseInt(maxPrice),
+        };
+    }
+
+    // Создаем объект опций для запроса к базе данных
+    const dbOptions = {
+        where,
+        select: {
+            productId: true,
+            name: true,
+            price: true,
+            opt_price: true,
+            active: true,
+            art: true,
+            category: true,
+            brand: true,
+        },
+        orderBy: {
+            price: sort === 'minPrice' ? 'asc' : 'desc',
+        },
+    };
+
+    // Если параметр limit задан, преобразуем его в число и применяем
+    if (limit) {
+        dbOptions.take = parseInt(limit);
+    }
+
+    // Получаем товары с учетом пагинации и/или лимита
+    const products = await prisma.product.findMany(dbOptions);
+
+    // Получаем общее количество товаров без учета пагинации
+    const totalCount = await prisma.product.count({where});
+    const countOnPage = products.length;
+
+    res.json({ countOnPage, totalCount, products });
+}
+
+
 
 	async getOne(req, res) {
 		let product;
@@ -123,6 +150,10 @@ class ProductController {
 				desc: true,
 				art: true,
 				category: true,
+				barcode: true,
+				sizeId: true,
+				sizeName: true,
+				brand: true
 			},
 		});
 

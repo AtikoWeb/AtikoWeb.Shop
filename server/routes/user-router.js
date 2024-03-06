@@ -7,6 +7,7 @@ userRouter.get('/get-all', userController.getUsers);
 userRouter.post('/signup', userController.signUp);
 userRouter.post('/signin', userController.signIn);
 userRouter.post('/verify', userController.verificationUser);
+userRouter.put('/change-password', userController.changePassword);
 userRouter.delete('/delete-all', userController.deleteUsers);
 userRouter.delete('/delete-one', userController.deleteUser);
 

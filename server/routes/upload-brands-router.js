@@ -1,25 +1,25 @@
 import Router from 'express';
-const uploadCategoriesRouter = new Router();
+const uploadBrandsRouter = new Router();
 import path from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import CategoryController from '../controllers/category-controller.js';
+import BrandsController from '../controllers/brands-controller.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const accessToken = process.env.ACCESS_TOKEN;
 
-uploadCategoriesRouter.post('/', async (req, res) => {
+uploadBrandsRouter.post('/', async (req, res) => {
 	try {
-		const { categoryFile } = req.files;
+		const { brandsFile } = req.files;
 		const token = req.headers[process.env.HEADER_TOKEN_NAME];
 		if (accessToken != token) {
 			return res.send('ACCESS DENIED');
 		}
 
-		const categoryName = 'category.json';
-		await categoryFile.mv(path.resolve(__dirname, '..', 'data', categoryName));
+		const brandsName = 'brands.json';
+		await brandsFile.mv(path.resolve(__dirname, '..', 'data', brandsName));
 
-		await CategoryController.create();
+		await BrandsController.create();
 
 		res.send('Загрузка данных прошла успешно!');
 	} catch (error) {
@@ -29,4 +29,4 @@ uploadCategoriesRouter.post('/', async (req, res) => {
 });
 
 
-export default uploadCategoriesRouter;
+export default uploadBrandsRouter;

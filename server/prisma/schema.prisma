@@ -13,6 +13,7 @@ datasource db {
 model User {
   id       String  @id @default(uuid()) @db.VarChar(50)
   username String  @db.VarChar(50)
+  email    String  @unique @db.VarChar(50)
   password String  @db.VarChar(255)
   phone    String  @unique @db.VarChar(20)
   active   Boolean @default(false)
@@ -32,15 +33,27 @@ model Product {
   sizeId     String    @db.VarChar(50)
   sizeName   String    @db.VarChar(50)
   categoryId String?   @db.VarChar(50)
+  brand      Brand?    @relation(fields: [brandId], references: [id])
+  brandId    String?   @db.VarChar(50)
 }
 
 model Category {
+  id            String    @id @db.VarChar(50)
+  name          String    @unique
+  Product       Product[]
+  isInteresting Boolean   @default(false)
+}
+
+model Brand {
   id      String    @id @db.VarChar(50)
   name    String    @unique
   Product Product[]
 }
 
 model Config {
-  main_color   String @unique @db.VarChar(50)
-  column_count Int    @unique
+  id            String  @id @default(uuid()) @db.VarChar(50)
+  main_color    String  @unique @db.VarChar(50)
+  column_count  Int     @unique
+  shop_name     String? @default("AtikoWeb.Store") @db.VarChar()
+  isInteresting Boolean @default(false)
 }

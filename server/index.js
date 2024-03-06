@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const PORT = process.env.PORT || 5555;
+const PORT = process.env.PORT || 2424;
 const app = express();
 
 app.use(express.json());
@@ -19,6 +19,9 @@ app.use(fileUpload({}));
 app.use(cors());
 app.use('/api', router);
 app.use('/api/images', express.static(path.resolve(__dirname, 'images')));
+
+
+
 
 const startApp = async () => {
 	try {

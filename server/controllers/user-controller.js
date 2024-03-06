@@ -7,7 +7,7 @@ const saltRounds = 10; // количество "проходов" хеширов
 
 // Настройка транспорта для nodemailer
 const transporter = nodemailer.createTransport({
-	service: 'Mail', // Можно использовать другой SMTP сервис или данные вашего почтового сервера
+	service: 'mail.ru', // Можно использовать другой SMTP сервис или данные вашего почтового сервера
 	secure: true,
 	auth: {
 		user: 'bil@atikoweb.ru', // Поменяйте на вашу почту
@@ -50,26 +50,30 @@ class UserController {
 	}
 
 	async signUp(req, res) {
-		const { name, phone, password, email } = req.body;
+		const { name, password, phone, email } = req.body;
 
 		try {
 			const hashPassword = await generateHash(password);
 
 			const user = {
 				username: name,
-				phone,
+				email,
 				password: hashPassword,
 				active: false,
+				phone,
 			};
 
 			await prisma.user.create({ data: user });
 
 			// Генерация кода подтверждения
 			const verificationCode = Math.floor(1000 + Math.random() * 9000);
-			this.verificationCodes[phone] = verificationCode;
+			this.verificationCodes[email] = verificationCode;
 
 			const mailOptions = {
-				from: 'bil@atikoweb.ru',
+				from: {
+					name: 'AtikoWeb',
+					address: 'bil@atikoweb.ru'
+				},
 				to: email,
 				html: `<div
 			style="
@@ -131,16 +135,16 @@ class UserController {
 	}
 
 	async verificationUser(req, res) {
-		const { phone, code } = req.body;
+		const { email, code } = req.body;
 
 		// Получение кода подтверждения из временного хранилища
-		const storedCode = this.verificationCodes[phone];
+		const storedCode = this.verificationCodes[email];
 
 		if (storedCode && storedCode.toString() === code) {
 			// Коды совпадают - пользователь подтвержден
-			delete this.verificationCodes[phone]; // Удаляем использованный код
+			delete this.verificationCodes[email]; // Удаляем использованный код
 			const user = await prisma.user.update({
-				where: { phone },
+				where: { email },
 				data: { active: true },
 			});
 			res.json({ userId: user.id });
@@ -151,16 +155,26 @@ class UserController {
 	}
 
 	async signIn(req, res) {
-		const { phone, password } = req.body;
-
+		const { email, phone, password } = req.body;
+		let user;
+  
 		try {
 			// Проверка, существует ли пользователь
-			const user = await prisma.user.findFirst({
-				where: {
+			user = await prisma.user.findFirst({
+			where: {
+				OR: [
+				{
+					email,
+					active: true,
+				},
+				{
 					phone,
 					active: true,
 				},
+				],
+			},
 			});
+			
 
 			if (!user) {
 				return res.status(401).json({ error: 'Пользователь не найден' });
@@ -196,7 +210,8 @@ class UserController {
 			},
 			select: {
 				username: true,
-				phone: true,
+				email: true,
+				phone: true
 			},
 		});
 
@@ -217,8 +232,9 @@ class UserController {
 				select: {
 					id: true,
 					username: true,
-					phone: true,
 					active: true,
+					phone: true,
+					email: true
 				},
 			});
 			res.json(users);
@@ -240,12 +256,54 @@ class UserController {
 
 	async deleteUser({ req, res }) {
 		try {
-			const { phone } = req.body;
-			await prisma.user.delete({ where: { phone } });
+			const { email } = req.query;
+			await prisma.user.delete({ where: { email } });
 			res.send('Пользователь успешно удален!');
 		} catch (error) {
 			console.log(error);
 			res.send('Ошибка при удалении');
+		}
+	}
+
+	async changePassword(req, res) {
+		const { oldPassword, newPassword, email } = req.body;
+
+		try {
+			// Проверка, существует ли пользователь
+			const user = await prisma.user.findFirst({
+				where: {
+					email,
+					active: true,
+				},
+			});
+
+			if (!user) {
+				return res.status(401).json({ error: 'Пользователь не найден' });
+			}
+
+			// Проверка совпадения старого пароля
+			const isOldPasswordMatch = await comparePassword(
+				oldPassword,
+				user.password
+			);
+
+			if (!isOldPasswordMatch) {
+				return res.status(401).json({ error: 'Неверный старый пароль' });
+			}
+
+			// Генерация нового хэша пароля
+			const newHashedPassword = await generateHash(newPassword);
+
+			// Обновление пароля в базе данных
+			await prisma.user.update({
+				where: { email },
+				data: { password: newHashedPassword },
+			});
+
+			res.json({ message: 'Пароль успешно изменен' });
+		} catch (error) {
+			console.log(error);
+			res.send('Ошибка при смены пароля!');
 		}
 	}
 }

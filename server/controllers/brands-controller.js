@@ -2,19 +2,19 @@ import fs from 'fs';
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
-class CategoryController {
+class BrandsController {
 	async create() {
 		try {
-			await prisma.category.deleteMany();
+			await prisma.brand.deleteMany();
 
-			const data = await fs.promises.readFile('./data/category.json');
-			const categories = JSON.parse(data.toString().replace(/^\uFEFF/, ''));
+			const data = await fs.promises.readFile('./data/brands.json');
+			const brands = JSON.parse(data.toString().replace(/^\uFEFF/, ''));
 
-			for (const category of categories) {
-				await prisma.category.create({
+			for (const brand of brands) {
+				await prisma.brand.create({
 					data: {
-						id: category.id,
-						name: category.name,
+						id: brand.id,
+						name: brand.name,
 					},
 				});
 			}
@@ -25,7 +25,7 @@ class CategoryController {
 
 	async getAll(req, res) {
 		let { id } = req.query;
-		let category;
+		let brands;
 		const accessToken = process.env.ACCESS_TOKEN;
 		const token = req.headers[process.env.HEADER_TOKEN_NAME];
 
@@ -33,18 +33,18 @@ class CategoryController {
 			return res.send('ACCESS DENIED');
 		}
 		if (!id) {
-			category = await prisma.category.findMany({where: {isInteresting: false}});
+			brands = await prisma.brand.findMany();
 		}
 
 		if (id) {
-			category = await prisma.category.findMany({
+			brands = await prisma.brand.findMany({
 				where: {
 					id,
 				},
 			});
 		}
 
-		res.json({ category });
+		res.json({ brands });
 	}
 
 	async getOne(req, res) {
@@ -64,4 +64,4 @@ class CategoryController {
 	}
 }
 
-export default new CategoryController();
+export default new BrandsController();

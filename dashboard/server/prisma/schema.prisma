@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id           String @id @default(uuid()) @db.VarChar(50)
+  domain       String @unique @db.VarChar(50)
+  db_code      String @unique @db.VarChar(50)
+  atikowebURL  String @unique @default("mpos.atikoweb.ru") @db.VarChar(255)
+  yandexMapURL String @unique @default("https://yandex.ru/map-widget/v1/?um=constructor%3A12ead957f26aa42e31c29ee378370e6991b01a8f0fced1618f3b250230c7d0f0&amp;source=constructor") @db.VarChar(255)
+  token        String @unique @db.VarChar(255)
+  status       status
+  server       Server @relation(fields: [serverId], references: [id])
+  serverId     String @db.VarChar(50)
+}
+
+model Server {
+  id         String   @id @default(uuid()) @db.VarChar(50)
+  name       String   @unique @db.VarChar(50)
+  ip         String   @unique @db.VarChar(50)
+  client     Client[]
+  clientsQty Int      @default(0)
+}
+
+enum status {
+  active
+  inactive
+}

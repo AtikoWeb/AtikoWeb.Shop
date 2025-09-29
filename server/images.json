@@ -1,0 +1,7 @@
+{
+  "originator": "SignOTP",
+  "recipient": "+77089493515",
+  "content": "Greetings from D7 API, your mobile verification code is: {1234}",
+  "expiry": "600",
+  "data_coding": "text"
+}

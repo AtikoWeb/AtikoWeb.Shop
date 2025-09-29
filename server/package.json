@@ -1,0 +1,49 @@
+{
+	"name": "server",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"type": "module",
+	"scripts": {
+		"start": "node index.js",
+		"dev": "nodemon index.js"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@prisma/client": "^5.12.1",
+		"@prisma/migrate": "^5.11.0",
+		"axios": "^1.6.7",
+		"bcrypt": "^5.1.0",
+		"body-parser": "^1.20.3",
+		"commander": "^12.1.0",
+		"cookie-parser": "^1.4.6",
+		"cors": "^2.8.5",
+		"dotenv": "^16.0.3",
+		"express": "^4.18.2",
+		"express-fileupload": "^1.4.0",
+		"express-validator": "^6.14.2",
+		"firebase-admin": "^11.11.1",
+		"http-errors": "^2.0.0",
+		"jsonwebtoken": "^8.5.1",
+		"node-cron": "^3.0.2",
+		"nodemailer": "^6.8.0",
+		"pg": "^8.11.3",
+		"pg-hstore": "^2.3.4",
+		"react-icons": "^5.0.1",
+		"socket.io": "^4.7.5",
+		"transliteration": "^2.3.5",
+		"uuid": "^9.0.0"
+	},
+	"devDependencies": {
+		"nodemon": "^2.0.20",
+		"prisma": "^5.12.1"
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"require": "./dist/index.js",
+			"import": "./wrapper.mjs"
+		}
+	}
+}
